@@ -13,7 +13,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinPool; 
 
 class ParallelAutomatonSim {
 	static final boolean DEBUG = false;           //  For debugging output, off

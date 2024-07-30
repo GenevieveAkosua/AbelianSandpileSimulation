@@ -20,20 +20,20 @@ import java.util.concurrent.RecursiveAction; // Change to recursivetasks if no r
 public class ParallelGrid extends RecursiveAction {
 	private int rows, columns;     //  Could be used to represent the start and end
 	private int start, end;        //  Start and end of thread's range
-	private int [][] grid;         //  Grid 
-	private int [][] updateGrid;   //  Grid for next time step
+	private int[][] grid;          //  Grid 
+	private int[][] updateGrid;    //  Grid for next time step
 	static final int THRESHOLD = 500;
     
 	public ParallelGrid(int rows, int columns, int start, int end) {
-		this.rows = rows + 2;                           // for the "sink" border
-		this.columns = columns + 2;                     // for the "sink" border
+		this.rows = rows + 2;                           // Add 2 for the "sink" border
+		this.columns = columns + 2;                     // Add 2 for the "sink" border
 		this.start = start;
 		this.end = end;
 		grid = new int[this.rows][this.columns];
 		updateGrid = new int[this.rows][this.columns];
 		// This is what we'd want to parallelise, I think
-		/* grid  initialization */
-		for(int i = 0; i < this.rows; i++ ) {
+		/* grid  initialisation */ // Why do we need this though??
+		for(int i = 0; i < this.rows; i++ ) { // Initialise each grid block with 0
 			for( int j = 0; j < this.columns; j++ ) {
 				grid[i][j] = 0;
 				updateGrid[i][j] = 0;
@@ -41,10 +41,10 @@ public class ParallelGrid extends RecursiveAction {
 		}
 	}
 
-	// readFromArray calls from here
-	public ParallelGrid(int[][] newGrid) {
+	// NB readFromArray calls from here
+	public ParallelGrid(int[][] newGrid, int beg, int fin) { // Beg and end have the start and finish values
 		this(newGrid.length, newGrid[0].length); // call constructor above
-		// don't copy over sink border
+		// Don't copy over sink border
 		for(int i = 1; i < rows - 1; i++ ) {
 			for( int j = 1; j < columns - 1; j++ ) {
 				this.grid[i][j] = newGrid[i - 1][j - 1];
@@ -54,7 +54,7 @@ public class ParallelGrid extends RecursiveAction {
 	}
 
 	public ParallelGrid(ParallelGrid copyGrid) {
-		this(copyGrid.rows,copyGrid.columns); //call constructor above
+		this(copyGrid.rows,copyGrid.columns, int beg, int fin); //call constructor above
 		/* grid  initialization */
 		for(int i = 0; i < rows; i++ ) {
 			for( int j = 0; j < columns; j++ ) {
