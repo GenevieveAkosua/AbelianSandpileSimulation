@@ -16,12 +16,13 @@ import java.io.IOException;
 import java.util.concurrent.ForkJoinPool; 
 
 class ParallelAutomatonSim {
-	static final boolean DEBUG = false;           //  For debugging output, off
+	static final boolean DEBUG = false;                          //  For debugging output, off
 	
 	static long startTime = 0;
 	static long endTime = 0;
 
-	static int[][] comboGrid = null;                     // Combination of all the sub-grids
+	static int[][] comboGrid = null;                             // Combination of all the sub-grids
+	static final ForkJoinPol forkjoinpool = new ForkJoinPool();  // Create FJP object
 
 	// Timers - note milliseconds
 	private static void tick() {                  //  Start timing
@@ -63,7 +64,8 @@ class ParallelAutomatonSim {
 	        }
 	        return array;
 	    }
-	 
+
+	
     public static void main(String[] args) throws IOException {
 
     	ParallelGrid simulationGrid;  //  Instantiate the cellular automaton grid
@@ -76,8 +78,13 @@ class ParallelAutomatonSim {
   		String inputFileName = args[0];  //input file name
 		String outputFileName = args[1]; // output file name
     
-    	// Read from input .csv file and create a ParallelGrid object
+    	// Specify the task to be done
+		ForkJoinPool pool = new ForkJoinPool();
+
+		// Read from input .csv file and create a ParallelGrid object
     	simulationGrid = new ParallelGrid(readArrayFromCSV(inputFileName));
+
+		pool.invoke(simulationGrid);
     	
     	//for debugging - hardcoded re-initialisation options
     	//simulationGrid.set(rows/2,columns/2,rows*columns*2);

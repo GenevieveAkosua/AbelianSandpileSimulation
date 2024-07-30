@@ -8,6 +8,11 @@
  * @version:     29/07/2024
  ************************************************************************************************/
 
+ // Thoughts
+ // What is a meaningful way to split the grids? Line by line? In square blocks? Maybe dynamic rectangular blocks?
+ // Do I still get to divide up the numb of tasks, say 400 total and I divide by 10, so 40 each, and that gets put into a pool for worker threads to fetch?
+ // Values inside the grids are shared bc each needs to update deoending on if the sandpile toppled or not
+
 //package serialAbelianSandpile;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -20,9 +25,9 @@ import java.util.concurrent.RecursiveAction; // Change to recursivetasks if no r
 public class ParallelGrid extends RecursiveAction {
 	private int rows, columns;     //  Could be used to represent the start and end
 	private int start, end;        //  Start and end of thread's range
-	private int[][] grid;          //  Grid 
+	private int[][] grid;          //  Grid
 	private int[][] updateGrid;    //  Grid for next time step
-	static final int THRESHOLD = 500;
+	static final int SEQUENTIAL_THRESHOLD = 25;  // How do you decide on a threshhold if your program input varies significantly
     
 	public ParallelGrid(int rows, int columns, int start, int end) {
 		this.rows = rows + 2;                           // Add 2 for the "sink" border
@@ -32,11 +37,11 @@ public class ParallelGrid extends RecursiveAction {
 		grid = new int[this.rows][this.columns];
 		updateGrid = new int[this.rows][this.columns];
 		// This is what we'd want to parallelise, I think
-		/* grid  initialisation */ // Why do we need this though??
-		for(int i = 0; i < this.rows; i++ ) { // Initialise each grid block with 0
-			for( int j = 0; j < this.columns; j++ ) {
-				grid[i][j] = 0;
-				updateGrid[i][j] = 0;
+		/* grid  initialisation */ // NEED TO EDIT THESE RANGES, MAYBE TO START END VALS
+		for(int begin = start; begin < this.rows; begin++ ) { // Initialise each grid block with 0
+			for(int j = start; j < this.columns; j++) {
+				grid[begin][j] = 0;
+				updateGrid[begin][j] = 0;
 			}
 		}
 	}
@@ -70,9 +75,23 @@ public class ParallelGrid extends RecursiveAction {
 	 */
 	protected void compute() {
 	    // If below threshold, run sequentially
-        if((end - start) < THRESHOLD) {
+        if((end - start) < SEQUENTIAL_THRESHOLD) {
 		// Call michelles method or better, copy the seqential method 
+		// Return part of the grid
 		} else {
+			// Split the grid in two
+			// Need to check these ranges, maybe rows and cols not / 2
+			// WHICH CONSTRUCTOR??
+			ParallelGrid leftGrid = new ParallelGrid( start, ((start + end) / 2)); // Recurse the left half of the grid
+			ParallelGrid rightGrid = new ParallelGrid(rows, columns, ((start + end) / 2), end); // Recurse the right half of the grid			
+
+		//	ParallelGrid leftGrid = new ParallelGrid((rows / 2), (columns / 2), start, ((start + end) / 2)); // Recurse the left half of the grid
+		//	ParallelGrid rightGrid = new ParallelGrid(((rows / 2)), ((columns / 2)), ((start + end) / 2), end); // Recurse the right half of the grid
+
+			// Create threads using fork/join method
+			left.fork();      // Create subthreads to deal with the left side
+			right.compute();  // Handle the right side in this thread
+			left.join();      // Ensure the left side is finished before the right/main user thread terminates 
 		}
 	}
 	
