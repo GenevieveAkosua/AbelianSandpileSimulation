@@ -19,35 +19,35 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
-import java.util.concurrent.RecursiveAction; // Change to recursivetasks if no return
+import java.util.concurrent.RecursiveTask; // Change to recursivetasks if no return
 
 // This class is for the grid for the Abelian Sandpile cellular automaton
-public class ParallelGrid extends RecursiveAction {
+public class ParallelGrid extends RecursiveTask {
 	private int rows, columns;     //  Could be used to represent the start and end
 	private int start, end;        //  Start and end of thread's range
 	private int[][] grid;          //  Grid
 	private int[][] updateGrid;    //  Grid for next time step
 	static final int SEQUENTIAL_THRESHOLD = 25;  // How do you decide on a threshhold if your program input varies significantly
     
-	public ParallelGrid(int rows, int columns, int start, int end) {
+	public ParallelGrid(int rows, int columns) {
 		this.rows = rows + 2;                           // Add 2 for the "sink" border
 		this.columns = columns + 2;                     // Add 2 for the "sink" border
-		this.start = start;
-		this.end = end;
+	//	this.start = start;
+	//	this.end = end;
 		grid = new int[this.rows][this.columns];
 		updateGrid = new int[this.rows][this.columns];
 		// This is what we'd want to parallelise, I think
 		/* grid  initialisation */ // NEED TO EDIT THESE RANGES, MAYBE TO START END VALS
-		for(int begin = start; begin < this.rows; begin++ ) { // Initialise each grid block with 0
-			for(int j = start; j < this.columns; j++) {
-				grid[begin][j] = 0;
-				updateGrid[begin][j] = 0;
+		for(int i = 0; i < this.rows; i++ ) { // Initialise each grid block with 0
+			for(int j = 0; j < this.columns; j++) {
+				grid[i][j] = 0;
+				updateGrid[i][j] = 0;
 			}
 		}
 	}
 
 	// NB readFromArray calls from here
-	public ParallelGrid(int[][] newGrid, int beg, int fin) { // Beg and end have the start and finish values
+	public ParallelGrid(int[][] newGrid) { // Beg and end have the start and finish values
 		this(newGrid.length, newGrid[0].length); // call constructor above
 		// Don't copy over sink border
 		for(int i = 1; i < rows - 1; i++ ) {
@@ -61,8 +61,8 @@ public class ParallelGrid extends RecursiveAction {
 	public ParallelGrid(ParallelGrid copyGrid) {
 		this(copyGrid.rows,copyGrid.columns, int beg, int fin); //call constructor above
 		/* grid  initialization */
-		for(int i = 0; i < rows; i++ ) {
-			for( int j = 0; j < columns; j++ ) {
+		for(int i = 0; i < rows; i++) {
+			for(int j = 0; j < columns; j++) {
 				this.grid[i][j] = copyGrid.get(i,j);
 			}
 		}
@@ -71,27 +71,47 @@ public class ParallelGrid extends RecursiveAction {
     /**
 	 * Method to ...
 	 * @param  none
-	 * @return void
+	 * @return change A boolean that shows whether the grid cell has been changed or not
 	 */
-	protected void compute() {
+	protected boolean compute() {
 	    // If below threshold, run sequentially
-        if((end - start) < SEQUENTIAL_THRESHOLD) {
-		// Call michelles method or better, copy the seqential method 
-		// Return part of the grid
+        if((column - row) < SEQUENTIAL_THRESHOLD) {
+
+            boolean change = false;
+			//do not update border
+			for(int i = 1; i < rows - 1; i++) {
+				for(int j = 1; j < columns - 1; j++) {
+					updateGrid[i][j] = (grid[i][j] % 4) + 
+						              (grid[i - 1][j] / 4) +
+						               (grid[i + 1][j] / 4) +
+						               grid[i][j - 1] / 4 + 
+						               grid[i][j + 1] / 4;
+				    if(grid[i][j] != updateGrid[i][j]) {  
+					    change = true;
+				    }
+		        }
+			} //end nested for
+	        if(change) { 
+	            nextTimeStep();
+	        }
+
+	        return change;
+
 		} else {
 			// Split the grid in two
 			// Need to check these ranges, maybe rows and cols not / 2
 			// WHICH CONSTRUCTOR??
-			ParallelGrid leftGrid = new ParallelGrid( start, ((start + end) / 2)); // Recurse the left half of the grid
-			ParallelGrid rightGrid = new ParallelGrid(rows, columns, ((start + end) / 2), end); // Recurse the right half of the grid			
+			ParallelGrid leftGrid = new ParallelGrid(grid); // Recurse the left half of the grid
+			ParallelGrid rightGrid = new ParallelGrid(grid); // Recurse the right half of the grid			
 
 		//	ParallelGrid leftGrid = new ParallelGrid((rows / 2), (columns / 2), start, ((start + end) / 2)); // Recurse the left half of the grid
 		//	ParallelGrid rightGrid = new ParallelGrid(((rows / 2)), ((columns / 2)), ((start + end) / 2), end); // Recurse the right half of the grid
 
 			// Create threads using fork/join method
-			left.fork();      // Create subthreads to deal with the left side
-			right.compute();  // Handle the right side in this thread
-			left.join();      // Ensure the left side is finished before the right/main user thread terminates 
+			leftGrid.fork();      // Create subthreads to deal with the left side
+			boolean rightRes = rightgrid.compute();  // Handle the right side in this thread
+			boolean leftRes = leftGrid.join();      // Ensure the left side is finished before the right/main user thread terminates 
+			return (rightRes && leftRes);
 		}
 	}
 	
@@ -126,26 +146,26 @@ public class ParallelGrid extends RecursiveAction {
 		}
 	}
 	
-	//key method to calculate the next update grod
-	boolean update() {
-		boolean change=false;
-		//do not update border
-		for( int i = 1; i<rows-1; i++ ) {
-			for( int j = 1; j<columns-1; j++ ) {
-				updateGrid[i][j] = (grid[i][j] % 4) + 
-						(grid[i-1][j] / 4) +
-						grid[i+1][j] / 4 +
-						grid[i][j-1] / 4 + 
-						grid[i][j+1] / 4;
-				if (grid[i][j] != updateGrid[i][j]) {  
-					change = true;
-				}
-		}} //end nested for
-	if (change) { 
-	    nextTimeStep();
-	}
-	return change;
-	}
+//	//key method to calculate the next update grod
+//	boolean update() {
+//		boolean change=false;
+//		//do not update border
+//		for( int i = 1; i<rows-1; i++ ) {
+//			for( int j = 1; j<columns-1; j++ ) {
+//				updateGrid[i][j] = (grid[i][j] % 4) +
+//						(grid[i-1][j] / 4) +
+//						grid[i+1][j] / 4 +
+//						grid[i][j-1] / 4 +
+//						grid[i][j+1] / 4;
+//				if (grid[i][j] != updateGrid[i][j]) {
+//					change = true;
+//				}
+//		}} //end nested for
+//	if (change) {
+//	    nextTimeStep();
+//	}
+//	return change;
+//	}
 	
 	
 	

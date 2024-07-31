@@ -21,8 +21,8 @@ class ParallelAutomatonSim {
 	static long startTime = 0;
 	static long endTime = 0;
 
-	static int[][] comboGrid = null;                             // Combination of all the sub-grids
-	static final ForkJoinPol forkjoinpool = new ForkJoinPool();  // Create FJP object
+	//static int[][] comboGrid = null;                             // Combination of all the sub-grids
+	static final ForkJoinPol forkjoinpool = new ForkJoinPool();    // Create FJP object
 
 	// Timers - note milliseconds
 	private static void tick() {                  //  Start timing
@@ -34,7 +34,7 @@ class ParallelAutomatonSim {
 	}
 	
 	// Input is via a CSV file
-	 public static int [][] readArrayFromCSV(String filePath) {
+	 public static int[][] readArrayFromCSV(String filePath) {
 		 int[][] array = null;
 	        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
 	            String line = br.readLine();
