@@ -8,7 +8,7 @@ BIN_DIR = bin
 JAVA_FILES = $(wildcard $(SRC_DIR)/*.java)
 
 # Compiled class files 
-CLASS_FILES = $(patsubst $(SRC_DIR)/%.java, $(BIN_DIR)/%class, $(JAVA_FILES))
+CLASS_FILES = $(patsubst $(SRC_DIR)/%.java, $(BIN_DIR)/%.class, $(JAVA_FILES))
 
 # Compilation flags
 JAVAC_FLAGS = -d bin -sourcepath src

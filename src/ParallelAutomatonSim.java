@@ -8,6 +8,8 @@
  * @version:     29/07/2024
  ************************************************************************************************/
 
+// May have to reinitialise the thread pool
+// Update grid (or copy grid) ONLY once all threads are done
 //package serialAbelianSandpile;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -22,7 +24,7 @@ class ParallelAutomatonSim {
 	static long endTime = 0;
 
 	//static int[][] comboGrid = null;                             // Combination of all the sub-grids
-	static final ForkJoinPol forkjoinpool = new ForkJoinPool();    // Create FJP object
+	static final ForkJoinPool forkJoinPool = new ForkJoinPool();    // Create FJP object
 
 	// Timers - note milliseconds
 	private static void tick() {                  //  Start timing
@@ -65,10 +67,16 @@ class ParallelAutomatonSim {
 	        return array;
 	    }
 
+	public static boolean changed(int[][] grid, int[][] updateGrid, int start, int end) {
+	  
+		// Reinitialise the forJoinPool at every timestep
+		return forkJoinPool.invoke(new ParallelGrid(grid, updateGrid, start, end));
+	}
+
 	
     public static void main(String[] args) throws IOException {
 
-    	ParallelGrid simulationGrid;  //  Instantiate the cellular automaton grid
+    	//ParallelGrid simulationGrid;  //  Instantiate the cellular automaton grid
     	  	
     	if (args.length != 2) {       //  Input is the name of the input and output files
     		System.out.println("Incorrect number of command line arguments provided.");   	
@@ -78,13 +86,10 @@ class ParallelAutomatonSim {
   		String inputFileName = args[0];  //input file name
 		String outputFileName = args[1]; // output file name
     
-    	// Specify the task to be done
-		ForkJoinPool pool = new ForkJoinPool();
-
 		// Read from input .csv file and create a ParallelGrid object
-    	simulationGrid = new ParallelGrid(readArrayFromCSV(inputFileName));
+		ParallelGrid simulationGrid = new ParallelGrid(readArrayFromCSV(inputFileName));
 
-		pool.invoke(simulationGrid);
+		//boolean res = changed();
     	
     	//for debugging - hardcoded re-initialisation options
     	//simulationGrid.set(rows/2,columns/2,rows*columns*2);
@@ -99,12 +104,24 @@ class ParallelAutomatonSim {
     		System.out.printf("starting config: %d \n", counter);
     		simulationGrid.printGrid();
     	}
-		while(simulationGrid.update()) {                         //  Run until no change
-	    		if(DEBUG) {
-				    simulationGrid.printGrid();
-			    }
+		
+		// Do while here
+		//do {
+		//	if(DEBUG) {
+		//		simulationGrid.printGrid();
+		//	}
+
+			// Run each time step and count
+		//	counter++;
+		//} while(changed(simulationGrid.getGrid(), simulationGrid.getUpdateGrid(), 0, ))
+
+        int rowNum = simulationGrid.getRows();
+        while(changed(simulationGrid.getGrid(), simulationGrid.getUpdateGrid(), 0, rowNum)) {                         //  Run until no change
+	    	if(DEBUG) {
+			    simulationGrid.printGrid();
+			}
 	    		counter++;
-	    	}
+	    }
    		tock();                                                  //  End timer
    		
         System.out.println("Simulation complete, writing image...");
