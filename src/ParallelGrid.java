@@ -5,41 +5,39 @@
  * Copyright:    Copyright M.M.Kuttel 2024 CSC2002S, UCT
  *
  * @author:      Genevieve Chikwanha
- * @version:     29/07/2024
+ * @version:     04/08/2024
  ************************************************************************************************/
 
- // Thoughts
- // What is a meaningful way to split the grids? Line by line? In square blocks? Maybe dynamic rectangular blocks?
- // Do I still get to divide up the numb of tasks, say 400 total and I divide by 10, so 40 each, and that gets put into a pool for worker threads to fetch?
- // Values inside the grids are shared bc each needs to update deoending on if the sandpile toppled or not
-
-//package serialAbelianSandpile;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
-import java.util.concurrent.RecursiveTask; // Change to recursivetasks if no return
+import java.util.concurrent.RecursiveTask; 
 
-// This class is for the grid for the Abelian Sandpile cellular automaton
 public class ParallelGrid extends RecursiveTask<Boolean> {
-	private int rows, columns;     //  Could be used to represent the start and end
-	private int start, end;        //  Start and end of thread's range
-	private int[][] grid;          //  Grid
-	private int[][] updateGrid;    //  Grid for next time step
-	static final int SEQUENTIAL_THRESHOLD = 25;  // How do you decide on a threshhold if your program input varies significantly
+	private int rows, columns;
+	private int start, end;
+	private int[][] grid;
+	int[][] updateGrid;
+	static final int SEQUENTIAL_THRESHOLD = 4;
     
-	// Create an empty grid
+	/**
+	 * Constructor that creates an empty ParallelGrid of a specified height(rows) 
+	 * and width(columns).
+	 * 
+	 * @param rows    The number of rows the 2D grid contains
+	 * @param columns The number of columns the 2D grid contains
+	 */
 	public ParallelGrid(int rows, int columns) {
-		this.rows = rows + 2;                           // Add 2 for the "sink" border
-		this.columns = columns + 2;                     // Add 2 for the "sink" border
-	//	this.start = start;
-	//	this.end = end;
+		this.rows = rows + 2;                     // Add 2 for the "sink" border
+		this.columns = columns + 2;               // Add 2 for the "sink" border
+	    //	this.start = start;
+	    //	this.end = end;
 		grid = new int[this.rows][this.columns];
 		updateGrid = new int[this.rows][this.columns];
-		// This is what we'd want to parallelise, I think
-		/* grid  initialisation */ // NEED TO EDIT THESE RANGES, MAYBE TO START END VALS
-		for(int i = 0; i < this.rows; i++ ) { // Initialise each grid block with 0
+		// Grid  initialisation
+		for(int i = 0; i < this.rows; i++ ) {
 			for(int j = 0; j < this.columns; j++) {
 				grid[i][j] = 0;
 				updateGrid[i][j] = 0;
@@ -47,9 +45,14 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 		}
 	}
 
-	// Create a grid from a 2D array
-	public ParallelGrid(int[][] newGrid) { // Beg and end have the start and finish values
-		this(newGrid.length, newGrid[0].length); // call constructor above
+	/**
+	 * Constructor to create a grid from a 2D array.
+	 * Calls the consturctor above and fills it with the contents of the array.
+	 * 
+	 * @param newGrid A 2D array
+	 */
+	public ParallelGrid(int[][] newGrid) {
+		this(newGrid.length, newGrid[0].length);
 		// Don't copy over sink border
 		for(int i = 1; i < rows - 1; i++ ) {
 			for( int j = 1; j < columns - 1; j++ ) {
@@ -59,17 +62,28 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 		
 	}
 
-	// A constructor for the parallel operations
-	public ParallelGrid(int[][] grid, int[][] updateGrid, int start, int end) {
+	/**
+	 * A constructor for the parallel operations.
+	 * 
+	 * @param grid
+	 * @param updateGrid
+	 * @param start
+	 * @param end
+	 * @param rows
+	 * @param columns
+	 */
+	public ParallelGrid(int[][] grid, int[][] updateGrid, int start, int end, int rows, int columns) {
 		this.grid = grid;
 		this.updateGrid = updateGrid;
 		this.start = start;
 		this.end = end;
+		this.rows = rows;
+		this.columns = columns;
 	}
 
 	public ParallelGrid(ParallelGrid copyGrid) {
-		this(copyGrid.rows,copyGrid.columns); //call constructor above
-		/* grid  initialization */
+		this(copyGrid.rows,copyGrid.columns); // Call constructor above
+		// Grid  initialization
 		for(int i = 0; i < rows; i++) {
 			for(int j = 0; j < columns; j++) {
 				this.grid[i][j] = copyGrid.get(i,j);
@@ -84,24 +98,23 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	 */
 	protected Boolean compute() {
 	    // If below threshold, run sequentially
-        if((end - start) < SEQUENTIAL_THRESHOLD) {
+        if((end - start) <= SEQUENTIAL_THRESHOLD) {
+			System.out.println("Check to see if we reach sequential threashold");
 		    return update();
 		} else {
 
 		    // Way to split the grid -- WIP, currently experimental
-			int midPoint = ((end + start) / 2);
+			System.out.println("Test to see if we enter the else statement of compute.");
+			int midPoint = (end + start) / 2;
 			// Split the grid in two
-			ParallelGrid partOneGrid = new ParallelGrid(grid, updateGrid, start, midPoint); // Recurse the left half of the grid
-			ParallelGrid partTwoGrid = new ParallelGrid(grid, updateGrid, midpoint, end); // Recurse the right half of the grid			
+			ParallelGrid partOneGrid = new ParallelGrid(grid, updateGrid, start, midPoint); // Recurse the first half of the grid
+			ParallelGrid partTwoGrid = new ParallelGrid(grid, updateGrid, midPoint, end);   // Recurse the second half of the grid
 
-		//	ParallelGrid leftGrid = new ParallelGrid((rows / 2), (columns / 2), start, ((start + end) / 2)); // Recurse the left half of the grid
-		//	ParallelGrid rightGrid = new ParallelGrid(((rows / 2)), ((columns / 2)), ((start + end) / 2), end); // Recurse the right half of the grid
-
-			// Create threads using fork/join method
-			partOneGrid.fork();      // Create subthreads to deal with the left side
-			boolean partTwoRes = partTwoGrid.compute();  // Handle the right side in this thread
-			boolean partOneRes = partOneGrid.join();      // Ensure the left side is finished before the right/main user thread terminates 
-			return (partTwoRes || partOneRes); // Maybe use &&; was there a change in either part
+			// Create threads using ForkJoin method
+			partOneGrid.fork();                         // Create subthreads to deal with the left side
+			boolean partTwoRes = partTwoGrid.compute(); // Handle the right side in this thread
+			boolean partOneRes = partOneGrid.join();    // Ensure the left side is finished before the right/main user thread terminates 
+			return (partTwoRes || partOneRes);          // Maybe use &&
 		}
 	}
 	
@@ -148,13 +161,15 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	boolean update() {
 		boolean change = false;
 		//do not update border
-		for( int i = start; i < end; i++ ) {
-			for( int j = 1; j < columns-1; j++ ) {
+		for( int i = this.start; i < this.end; i++ ) {
+			System.out.println("Check number of columns: " +columns);
+			for( int j = 1; j < columns - 1; j++ ) {
+				//System.out.println("Check to see if we enter the update bit");
 				updateGrid[i][j] = (grid[i][j] % 4) +
 						(grid[i - 1][j] / 4) +
 						grid[i + 1][j] / 4 +
-						grid[i][j-1] / 4 +
-						grid[i][j+1] / 4;
+						grid[i][j - 1] / 4 +
+						grid[i][j + 1] / 4;
 				if (grid[i][j] != updateGrid[i][j]) {     // There has been a change to the grid then
 					change = true;
 				}
@@ -165,13 +180,18 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	return change; // If this is false, the loop stops since we're done changing the grid
 
 	}
-	
-	
-	
-	//display the grid in text format
+
+	public void swapGrids() {
+		int[][] temp = grid;
+		grid = updateGrid;
+		updateGrid = temp;
+	}
+
+
+	// Display the grid in text format
 	void printGrid() {
 		int i,j;
-		//not border is not printed
+		// Not border is not printed
 		System.out.printf("Grid:\n");
 		System.out.printf("+");
 		for( j=1; j<columns-1; j++ ) System.out.printf("  --");
@@ -191,30 +211,30 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 		System.out.printf("+\n\n");
 	}
 	
-	//write grid out as an image
+	// Write grid out as an image
 	void gridToImage(String fileName) throws IOException {
         BufferedImage dstImage =
                 new BufferedImage(rows, columns, BufferedImage.TYPE_INT_ARGB);
-        //integer values from 0 to 255.
-        int a=0;
-        int g=0;//green
-        int b=0;//blue
-        int r=0;//red
+        // Integer values from 0 to 255.
+        int a = 0;
+        int g = 0; // Green
+        int b = 0; // Blue
+        int r = 0; // Red
 
-		for( int i=0; i<rows; i++ ) {
-			for( int j=0; j<columns; j++ ) {
-			     g=0;//green
-			     b=0;//blue
-			     r=0;//red
+		for(int i = 0; i < rows; i++ ) {
+			for(int j = 0; j < columns; j++ ) {
+			     g = 0; // Green
+			     b = 0; // Blue
+			     r = 0; // Red
 
 				switch (grid[i][j]) {
 					case 0:
 		                break;
 		            case 1:
-		            	g=255;
+		            	g = 255;
 		                break;
 		            case 2:
-		                b=255;
+		                b = 255;
 		                break;
 		            case 3:
 		                r = 255;
@@ -230,16 +250,11 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 		                        | (r << 16)
 		                        | (g<< 8)
 		                        | b; 
-		              dstImage.setRGB(i, j, dpixel); //write it out
-
-			
-			}}
+		              dstImage.setRGB(i, j, dpixel); // Write it out
+			}
+		}
 		
         File dstFile = new File(fileName);
         ImageIO.write(dstImage, "png", dstFile);
 	}
-	
-	
-
-
 }

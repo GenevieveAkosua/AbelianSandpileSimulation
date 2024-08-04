@@ -8,9 +8,7 @@
  * @version:     29/07/2024
  ************************************************************************************************/
 
-// May have to reinitialise the thread pool
 // Update grid (or copy grid) ONLY once all threads are done
-//package serialAbelianSandpile;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -18,24 +16,43 @@ import java.io.IOException;
 import java.util.concurrent.ForkJoinPool; 
 
 class ParallelAutomatonSim {
-	static final boolean DEBUG = false;                          //  For debugging output, off
+	// When true, will print output for debugging
+	static final boolean DEBUG = false;
 	
+	// Timers to measure program run time
 	static long startTime = 0;
 	static long endTime = 0;
+                          
+	// ForkJoinPool object using the common pool approach
+	static final ForkJoinPool forkJoinPool = ForkJoinPool.commonPool(); 
 
-	//static int[][] comboGrid = null;                             // Combination of all the sub-grids
-	static final ForkJoinPool forkJoinPool = new ForkJoinPool();    // Create FJP object
-
-	// Timers - note milliseconds
-	private static void tick() {                  //  Start timing
+	/**
+	 * Records program start time
+	 *
+	 * @param  none
+	 * @return void
+	 */
+	private static void tick() {
 		startTime = System.currentTimeMillis();
 	}
 
-	private static void tock() {                  //  End timing
+	/**
+	 * Records program start time
+	 *
+	 * @param  none
+	 * @return void
+	 */
+	private static void tock() {
 		endTime = System.currentTimeMillis(); 
 	}
 	
-	// Input is via a CSV file
+	/**
+	 * Reads in the values from a .csv file and creates a 2D array with a height
+	 * and width specified in the command-line input to store the values from the file 
+	 *
+	 * @param  filePath The file path of the file to be read from
+	 * @return A 2D array with specified height (num of rows) and width (num of columns)
+	 */
 	 public static int[][] readArrayFromCSV(String filePath) {
 		 int[][] array = null;
 	        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -45,10 +62,8 @@ class ParallelAutomatonSim {
 	                String[] dimensions = line.split(",");
 	                int width = Integer.parseInt(dimensions[0]);
 	                int height = Integer.parseInt(dimensions[1]);
-	               	System.out.printf("Rows: %d, Columns: %d\n", width, height);      //  Do NOT CHANGE  - you must ouput this
-
-	                // Think I'd want splitting to happen here
-					array = new int[height][width];                                   //  Creates a new 2D array of specified height and width
+	               	System.out.printf("Rows: %d, Columns: %d\n", width, height);
+					array = new int[height][width];
 	                
 					// Read in cell values from .csv file
 					int rowIndex = 0;
@@ -67,68 +82,70 @@ class ParallelAutomatonSim {
 	        return array;
 	    }
 
-	public static boolean changed(int[][] grid, int[][] updateGrid, int start, int end) {
-	  
-		// Reinitialise the forJoinPool at every timestep
-		return forkJoinPool.invoke(new ParallelGrid(grid, updateGrid, start, end));
-	}
-
-	
-    public static void main(String[] args) throws IOException {
-
-    	//ParallelGrid simulationGrid;  //  Instantiate the cellular automaton grid
+    /**
+	 * The main method of the program which initialises a ParallelGrid object
+	 * and runs the update() function for the ParallelGrid class until
+	 * a stable state is reached. The result of the simulation, i.e. the 
+	 * number of timesteps and the time taken are calculated and printed 
+	 * to the stdout. A grid image is also drawn as saved as a .png file.
+	 *
+	 * @param args
+	 */
+	public static void main(String[] args) throws IOException {
     	  	
-    	if (args.length != 2) {       //  Input is the name of the input and output files
+    	// Check if correct arguments are provided in the command-line
+		if (args.length != 2) { 
     		System.out.println("Incorrect number of command line arguments provided.");   	
     		System.exit(0);
     	}
-    	/* Read argument values */
-  		String inputFileName = args[0];  //input file name
-		String outputFileName = args[1]; // output file name
+
+    	// Read command-line argument values 
+  		String inputFileName = args[0];   // Input file name
+		String outputFileName = args[1];  // Output file name
     
 		// Read from input .csv file and create a ParallelGrid object
 		ParallelGrid simulationGrid = new ParallelGrid(readArrayFromCSV(inputFileName));
 
-		//boolean res = changed();
-    	
-    	//for debugging - hardcoded re-initialisation options
+    	// For debugging - hardcoded re-initialisation options
     	//simulationGrid.set(rows/2,columns/2,rows*columns*2);
     	//simulationGrid.set(rows/2,columns/2,55000);
     	//simulationGrid.setAll(4);
     	//simulationGrid.setAll(8);
    	
-    	int counter = 0 ;
-    	tick();                                                 //  Start timer
+    	// Initialise counter and start timer
+		int counter = 0; // Counts number of timesteps taken
+    	tick();          // Starts timer to measure runtime
 
-    	if(DEBUG) {
+    	// Prints the grid if Debug is set to true
+		if (DEBUG) {
     		System.out.printf("starting config: %d \n", counter);
     		simulationGrid.printGrid();
     	}
-		
-		// Do while here
-		//do {
-		//	if(DEBUG) {
-		//		simulationGrid.printGrid();
-		//	}
 
-			// Run each time step and count
-		//	counter++;
-		//} while(changed(simulationGrid.getGrid(), simulationGrid.getUpdateGrid(), 0, ))
+        // Begin simulation updates by invoking ForkJoinPool if the grid has not reached stable state
+		int rowNum = simulationGrid.getRows();    // Get rows
+		int colNum = simulationGrid.getColumns(); // Get columns
+		boolean changed;                          // Boolean to check if there has been a change in the grid between timestep n and timestep n - 1
+        do {                                      // Continue loop until no change, i.e. stable state is reached
+			changed = forkJoinPool.invoke(new ParallelGrid(simulationGrid.getGrid(), simulationGrid.getUpdateGrid(), 1, rowNum));
+			
+			// Run double buffering technique
+			if (changed) {
+				simulationGrid.swapGrids();
+			}
 
-        int rowNum = simulationGrid.getRows();
-        while(changed(simulationGrid.getGrid(), simulationGrid.getUpdateGrid(), 0, rowNum)) {                         //  Run until no change
-	    	if(DEBUG) {
+	    	if (DEBUG) {
 			    simulationGrid.printGrid();
 			}
 	    		counter++;
-	    }
-   		tock();                                                  //  End timer
+	    } while (changed);
+   		tock(); // End timer
    		
         System.out.println("Simulation complete, writing image...");
-    	simulationGrid.gridToImage(outputFileName); //write grid as an image - you must do this.
-    	//Do NOT CHANGE below!
-    	//simulation details - you must keep these lines at the end of the output in the parallel versions      	System.out.printf("\t Rows: %d, Columns: %d\n", simulationGrid.getRows(), simulationGrid.getColumns());
+    	simulationGrid.gridToImage(outputFileName);               // Write grid as an image
+       	// Simulation details     	
+		//System.out.printf("\t Rows: %d, Columns: %d\n", simulationGrid.getRows(), simulationGrid.getColumns());
 		System.out.printf("Number of steps to stable state: %d \n", counter);
-		System.out.printf("Time: %d ms\n",endTime - startTime );			/*  Total computation time */		
+		System.out.printf("Time: %d ms\n",endTime - startTime );  //  Total computation time 		
     }
 }
