@@ -19,8 +19,8 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	private int rows, columns;
 	private int start, end;
 	private int[][] grid;
-	int[][] updateGrid;
-	static final int SEQUENTIAL_THRESHOLD = 4;
+	private int[][] updateGrid;
+	protected static final int SEQUENTIAL_THRESHOLD = 4;
     
 	/**
 	 * Constructor that creates an empty ParallelGrid of a specified height(rows) 
@@ -107,8 +107,8 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 			System.out.println("Test to see if we enter the else statement of compute.");
 			int midPoint = (end + start) / 2;
 			// Split the grid in two
-			ParallelGrid partOneGrid = new ParallelGrid(grid, updateGrid, start, midPoint); // Recurse the first half of the grid
-			ParallelGrid partTwoGrid = new ParallelGrid(grid, updateGrid, midPoint, end);   // Recurse the second half of the grid
+			ParallelGrid partOneGrid = new ParallelGrid(grid, updateGrid, start, midPoint, rows, columns); // Recurse the first half of the grid
+			ParallelGrid partTwoGrid = new ParallelGrid(grid, updateGrid, midPoint, end, rows, columns);   // Recurse the second half of the grid
 
 			// Create threads using ForkJoin method
 			partOneGrid.fork();                         // Create subthreads to deal with the left side

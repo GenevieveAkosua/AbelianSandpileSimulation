@@ -127,7 +127,7 @@ class ParallelAutomatonSim {
 		int colNum = simulationGrid.getColumns(); // Get columns
 		boolean changed;                          // Boolean to check if there has been a change in the grid between timestep n and timestep n - 1
         do {                                      // Continue loop until no change, i.e. stable state is reached
-			changed = forkJoinPool.invoke(new ParallelGrid(simulationGrid.getGrid(), simulationGrid.getUpdateGrid(), 1, rowNum));
+			changed = forkJoinPool.invoke(new ParallelGrid(simulationGrid.getGrid(), simulationGrid.getUpdateGrid(), 1, rowNum, rowNum, colNum));
 			
 			// Run double buffering technique
 			if (changed) {
