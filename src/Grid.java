@@ -1,14 +1,6 @@
-/************************************************************************************************
- * Purpose:      Parallel program to simulate an Abelian Sandpile cellular automaton
- *               This is the reference sequential version (Do not modify this code)
- * Adapted from: Michelle Kuttel 2024, University of Cape Town
- * Copyright:    Copyright M.M.Kuttel 2024 CSC2002S, UCT
- *
- * @author:      Genevieve Chikwanha
- * @version:     29/07/2024
- ************************************************************************************************/
-
+//Copyright M.M.Kuttel 2024 CSC2002S, UCT
 package serialAbelianSandpile;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;

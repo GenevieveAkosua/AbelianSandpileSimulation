@@ -18,8 +18,8 @@ import java.util.concurrent.RecursiveTask;
 public class ParallelGrid extends RecursiveTask<Boolean> {
 	private int rows, columns;
 	private int start, end;
-	private int[][] grid;
-	private int[][] updateGrid;
+	static int[][] grid;
+	static int[][] updateGrid;
 	protected static final int SEQUENTIAL_THRESHOLD = 4;
     
 	/**
@@ -72,12 +72,12 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	 * @param rows
 	 * @param columns
 	 */
-	public ParallelGrid(int[][] grid, int[][] updateGrid, int start, int end, int rows, int columns) {
+	public ParallelGrid(int[][] grid, int[][] updateGrid, int start, int end, int columns) {
 		this.grid = grid;
 		this.updateGrid = updateGrid;
 		this.start = start;
 		this.end = end;
-		this.rows = rows;
+		//this.rows = rows;
 		this.columns = columns;
 	}
 
@@ -99,16 +99,16 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	protected Boolean compute() {
 	    // If below threshold, run sequentially
         if((end - start) <= SEQUENTIAL_THRESHOLD) {
-			System.out.println("Check to see if we reach sequential threashold");
+			//System.out.println("Check to see if we reach sequential threashold");
 		    return update();
 		} else {
 
 		    // Way to split the grid -- WIP, currently experimental
-			System.out.println("Test to see if we enter the else statement of compute.");
+			//System.out.println("Test to see if we enter the else statement of compute.");
 			int midPoint = (end + start) / 2;
 			// Split the grid in two
-			ParallelGrid partOneGrid = new ParallelGrid(grid, updateGrid, start, midPoint, rows, columns); // Recurse the first half of the grid
-			ParallelGrid partTwoGrid = new ParallelGrid(grid, updateGrid, midPoint, end, rows, columns);   // Recurse the second half of the grid
+			ParallelGrid partOneGrid = new ParallelGrid(grid, updateGrid, start, midPoint, columns); // Recurse the first half of the grid
+			ParallelGrid partTwoGrid = new ParallelGrid(grid, updateGrid, midPoint, end, columns);   // Recurse the second half of the grid
 
 			// Create threads using ForkJoin method
 			partOneGrid.fork();                         // Create subthreads to deal with the left side
@@ -150,7 +150,7 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 
 	//for the next timestep - copy updateGrid into grid
 	public void nextTimeStep() {
-		for(int i=1; i<rows-1; i++ ) {
+		for(int i = 1; i < rows - 1; i++ ) {
 			for( int j = 1; j < columns - 1; j++ ) {
 				this.grid[i][j] = updateGrid[i][j];
 			}
@@ -161,9 +161,9 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	boolean update() {
 		boolean change = false;
 		//do not update border
-		for( int i = this.start; i < this.end; i++ ) {
-			System.out.println("Check number of columns: " +columns);
-			for( int j = 1; j < columns - 1; j++ ) {
+		for( int i = this.start; i < this.end + 1; i++ ) {
+			//System.out.println("Check number of columns: " +columns);
+			for( int j = 1; j < columns + 1; j++ ) {
 				//System.out.println("Check to see if we enter the update bit");
 				updateGrid[i][j] = (grid[i][j] % 4) +
 						(grid[i - 1][j] / 4) +
@@ -173,10 +173,12 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 				if (grid[i][j] != updateGrid[i][j]) {     // There has been a change to the grid then
 					change = true;
 				}
-		}} //end nested for
+		    }
+		} //end nested for
 	if(change) {    // If there's been a change to the grid, then move to the next time step
 	    nextTimeStep();
 	}
+
 	return change; // If this is false, the loop stops since we're done changing the grid
 
 	}
@@ -188,17 +190,19 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	}
 
 
+
+	// NB, am I supposed to update this????
 	// Display the grid in text format
 	void printGrid() {
 		int i,j;
 		// Not border is not printed
 		System.out.printf("Grid:\n");
 		System.out.printf("+");
-		for( j=1; j<columns-1; j++ ) System.out.printf("  --");
+		for( j = 1; j < columns-1; j++ ) System.out.printf("  --");
 		System.out.printf("+\n");
-		for( i=1; i<rows-1; i++ ) {
+		for( i = 1; i < rows - 1; i++ ) {
 			System.out.printf("|");
-			for( j=1; j<columns-1; j++ ) {
+			for( j = 1; j < columns - 1; j++ ) {
 				if ( grid[i][j] > 0) 
 					System.out.printf("%4d", grid[i][j] );
 				else
@@ -207,7 +211,7 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 			System.out.printf("|\n");
 		}
 		System.out.printf("+");
-		for( j=1; j<columns-1; j++ ) System.out.printf("  --");
+		for( j = 1; j < columns - 1; j++ ) System.out.printf("  --");
 		System.out.printf("+\n\n");
 	}
 	
