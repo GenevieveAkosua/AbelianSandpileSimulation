@@ -69,7 +69,6 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	 * @param updateGrid
 	 * @param start
 	 * @param end
-	 * @param rows
 	 * @param columns
 	 */
 	public ParallelGrid(int[][] grid, int[][] updateGrid, int start, int end, int columns) {
@@ -77,7 +76,6 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 		this.updateGrid = updateGrid;
 		this.start = start;
 		this.end = end;
-		//this.rows = rows;
 		this.columns = columns;
 	}
 
