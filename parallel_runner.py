@@ -6,31 +6,22 @@
 #            io pair into an Excel file, as well as a correctness
 #            evaluation for how correct each output is.
 # Author:    Genevieve Chikwanha
-# Version:   05/08/2024
+# Version:   03/08/2024
 # Credits:   See Report
 #
 ###################################################################
 
-"""
 import subprocess
 import pandas as panda
 import shlex
 import os
 
+'''
+Run the parallel program followed by the serial program
+'''
 
-Initiates the simulation for both the parallel and serial versions.
-
-def initiate_run(input_file, output_file, program_folder):
-    # Get cwd
-    current_dir = os.getcwd()
-
-    # Change to the appropriate directory
-    os.chdir(program_folder)
-
-    # Adjustable command to run the appropriate simulation
-
-    # Change back to the cwd
-    os.chdir(current_dir)
+#def run_programs(input_file, output_file, program_version):
+    #
 
 # List of input/output pairs to dynamically call make run on
 io_pairs = [
@@ -52,11 +43,10 @@ for input_file, output_file in io_pairs:
 
     for trial in range(TRIALS): # Call make run on specified io pair
 
-        # Command to run the simulation
         command = f'make run ARGS="input/{input_file} output/{output_file}"'
+
         # Run a subprocess
         result = subprocess.run(command, capture_output=True, text=True, shell=True)
-        # Store output lines
         output_lines = result.stdout.strip().split('\n')
 
         # Test
@@ -116,91 +106,4 @@ with panda.ExcelWriter('results.xlsx') as writer:
 
 print("All trials are complete and results have been saved.")
 
-"""
 
-import pandas as panda
-import subprocess
-import os
-
-
-def run_simulation(input_file, output_file, version_folder):
-    original_dir = os.getcwd()
-    os.chdir(version_folder)
-
-    command = f'make run ARGS="input/{input_file} output/{output_file}"'
-    result = subprocess.run(command, capture_output=True, text=True, shell=True)
-
-    os.chdir(original_dir)
-    return result.stdout.strip().split('\n')
-
-
-def extract_metrics(output_lines):
-    steps_line = next((line for line in output_lines if "Number of steps to stable state" in line), None)
-    time_line = next((line for line in output_lines if "Time:" in line), None)
-
-    steps = int(steps_line.split(":")[1].strip()) if steps_line else None
-    time = int(time_line.split(":")[1].strip().split()[0]) if time_line else None
-
-    return steps, time
-
-
-def compare_outputs(serial_output, parallel_output):
-    return serial_output == parallel_output
-
-
-TRIALS = 1
-serial_folder = "path/to/serial/folder"
-parallel_folder = "path/to/parallel/folder"
-io_pairs = [("input1.csv", "output1.csv"), ("input2.csv", "output2.csv")]  # Add your input-output pairs
-
-all_results = []
-
-for input_file, output_file in io_pairs:
-    for trial in range(TRIALS):
-        # Run serial version
-        serial_output = run_simulation(input_file, output_file, serial_folder)
-        serial_steps, serial_time = extract_metrics(serial_output)
-
-        # Run parallel version
-        parallel_output = run_simulation(input_file, output_file, parallel_folder)
-        parallel_steps, parallel_time = extract_metrics(parallel_output)
-
-        # Check correctness
-        is_correct = compare_outputs(serial_output, parallel_output)
-
-        # Store results
-        all_results.append({
-            'input_file': input_file,
-            'output_file': output_file,
-            'trial': trial,
-            'serial_timesteps': serial_steps,
-            'serial_timetaken': serial_time,
-            'parallel_timesteps': parallel_steps,
-            'parallel_timetaken': parallel_time,
-            'is_correct': is_correct
-        })
-
-    print(f"Completed {TRIALS} trials for {input_file} -> {output_file}")
-
-# Convert results into a data frame
-data_frame = panda.DataFrame(all_results)
-
-# Calculate minimum values and correctness for each io pair
-min_results = data_frame.groupby(['input_file', 'output_file']).agg({
-    'serial_timesteps': 'min',
-    'serial_timetaken': 'min',
-    'parallel_timesteps': 'min',
-    'parallel_timetaken': 'min',
-    'is_correct': 'mean'
-}).reset_index()
-
-min_results = min_results.rename(columns={'is_correct': 'correctness_rate'})
-
-# Save the full results and minimum values in sheets in an Excel file
-with panda.ExcelWriter('results.xlsx') as writer:
-    data_frame.to_excel(writer, sheet_name='All Results', index=False)
-    min_results.to_excel(writer, sheet_name='Summary', index=False)
-
-print("All trials are complete and results have been saved.")
-print("\nSummary:")
-print(min_results)

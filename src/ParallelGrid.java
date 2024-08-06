@@ -65,11 +65,11 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	/**
 	 * A constructor for the parallel operations.
 	 * 
-	 * @param grid
-	 * @param updateGrid
-	 * @param start
-	 * @param end
-	 * @param columns
+	 * @param grid        A 2D grid with specified height and width.
+	 * @param updateGrid  A copy of the 2D grid with the same specified height and width.
+	 * @param start       The start row for the thread.
+	 * @param end         The end row for the thread.
+	 * @param columns     The total number of columns in the grid.
 	 */
 	public ParallelGrid(int[][] grid, int[][] updateGrid, int start, int end, int columns) {
 		this.grid = grid;
@@ -90,7 +90,9 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	}
 
     /**
-	 * Method to ...
+	 * Method to recursivly split the workload into tasks for threads to do if the 
+	 * sequential threshld is reached.
+	 * 
 	 * @param  none
 	 * @return change A boolean that shows whether the grid cell has been changed or not
 	 */
