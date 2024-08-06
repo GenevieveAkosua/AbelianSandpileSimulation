@@ -17,7 +17,7 @@ import java.util.concurrent.ForkJoinPool;
 
 class ParallelAutomatonSim {
 	// When true, will print output for debugging
-	static final boolean DEBUG = false;
+	static final boolean DEBUG = true;
 	
 	// Timers to measure program run time
 	static long startTime = 0;
@@ -143,8 +143,13 @@ class ParallelAutomatonSim {
    		tock(); // End timer
    		
         System.out.println("Simulation complete, writing image...");
-    	simulationGrid.gridToImage(outputFileName);               // Write grid as an image
-       	// Simulation details     	
+		// Write grid as image
+    	simulationGrid.gridToImage(outputFileName);
+
+		// Write grid as .csv
+		simulationGrid.gridToCSV("outputGrids/CSVGrid_" + rowNum + "_by_" + colNum + ".csv");
+
+       	// Print simulation details     	
 		//System.out.printf("\t Rows: %d, Columns: %d\n", simulationGrid.getRows(), simulationGrid.getColumns());
 		System.out.printf("Number of steps to stable state: %d \n", counter);
 		System.out.printf("Time: %d ms\n",endTime - startTime );  //  Total computation time 		

@@ -148,7 +148,7 @@ def compare_outputs(serial_output, parallel_output):
     return serial_output == parallel_output
 
 
-TRIALS = 1
+TRIALS = 2
 serial_folder = "/Users/genevievechikwanha/Library/CloudStorage/OneDrive-UniversityofCapeTown/Uni Work/Computer Science/CSC2002S/CSC2002S 2024/1. Paralell Programming/Assignments/Assignment1/PCP_ParallelAssignment2024"
 parallel_folder = "/Users/genevievechikwanha/Library/CloudStorage/OneDrive-UniversityofCapeTown/Uni Work/Computer Science/CSC2002S/CSC2002S 2024/1. Paralell Programming/Assignments/Assignment1/CHKKAR002"
 io_pairs = [

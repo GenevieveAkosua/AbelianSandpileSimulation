@@ -10,6 +10,7 @@
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
@@ -90,8 +91,9 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	}
 
     /**
-	 * Method to recursivly split the workload into tasks for threads to do if the 
-	 * sequential threshld is reached.
+	 * Method to recursivly divide the grid row by row and initialise threads
+	 * to update each section of the grid and return if the grid has changed
+	 *   or not.
 	 * 
 	 * @param  none
 	 * @return change A boolean that shows whether the grid cell has been changed or not
@@ -260,5 +262,41 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 		
         File dstFile = new File(fileName);
         ImageIO.write(dstImage, "png", dstFile);
+	}
+
+	/**
+	 * Creates a .csv file representation of the grid.
+	 * 
+	 * @param   fileName The name that the .csv file should be saved as
+	 * @return  void
+	 */
+	public void gridToCSV(String fileName) throws IOException{
+        FileWriter write = new FileWriter(fileName);
+
+		//System.out.println(r + " and " + c);
+		//System.out.println("Grid dimensions: " + grid.length + "x" + grid[0].length);
+        //System.out.println("Last cell value: " + grid[grid.length-8][grid[0].length-2]);
+
+		// Write the dimensions to the .csv
+		write.append(Integer.toString(rows - 2)).append(",").append(Integer.toString(columns - 2));
+
+		// Add empty cells after the dimenstions in the .csv
+		for (int i = 2; i < columns; i++) {
+            write.append(",");
+		}
+		write.append("\n");
+
+		// Write the grid to the .csv
+		for (int j = 1; j < rows; j++) {
+            for (int i = 1; i < columns - 1; i++) {
+                write.append(Integer.toString(grid[j][i]));
+
+				if (i < columns - 1) {
+                    write.append(",");
+				}
+			}
+
+			write.append("\n");
+		}
 	}
 }
