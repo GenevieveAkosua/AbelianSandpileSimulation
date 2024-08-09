@@ -5,7 +5,7 @@
  * Copyright:    Copyright M.M.Kuttel 2024 CSC2002S, UCT
  *
  * @author:      Genevieve Chikwanha
- * @version:     04/08/2024
+ * @version:     05/08/2024
  ************************************************************************************************/
 
 import java.awt.image.BufferedImage;
@@ -13,18 +13,23 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import javax.imageio.ImageIO;
-
 import java.util.concurrent.RecursiveTask; 
 
 public class ParallelGrid extends RecursiveTask<Boolean> {
+	// The number of rows and columns 
 	private int rows, columns;
+	// The start and end row indexes 
 	private int start, end;
+	// A 2D grid
 	static int[][] grid;
+	// A copy of the 2D grid
 	static int[][] updateGrid;
-	protected static final int SEQUENTIAL_THRESHOLD = 4;
+	// The cutoff point for the compute method
+	protected static final int SEQUENTIAL_THRESHOLD = 2;
+
     
 	/**
-	 * Constructor that creates an empty ParallelGrid of a specified height(rows) 
+	 * General constructor that creates an empty ParallelGrid of a specified height(rows) 
 	 * and width(columns).
 	 * 
 	 * @param rows    The number of rows the 2D grid contains
@@ -33,8 +38,6 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	public ParallelGrid(int rows, int columns) {
 		this.rows = rows + 2;                     // Add 2 for the "sink" border
 		this.columns = columns + 2;               // Add 2 for the "sink" border
-	    //	this.start = start;
-	    //	this.end = end;
 		grid = new int[this.rows][this.columns];
 		updateGrid = new int[this.rows][this.columns];
 		// Grid  initialisation
@@ -46,8 +49,9 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 		}
 	}
 
+
 	/**
-	 * Constructor to create a grid from a 2D array.
+	 * General constructor to create a grid from a 2D array.
 	 * Calls the consturctor above and fills it with the contents of the array.
 	 * 
 	 * @param newGrid A 2D array
@@ -63,8 +67,9 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 		
 	}
 
+
 	/**
-	 * A constructor for the parallel operations.
+	 * Constructor to create a thread of object ParallelGrid type.
 	 * 
 	 * @param grid        A 2D grid with specified height and width.
 	 * @param updateGrid  A copy of the 2D grid with the same specified height and width.
@@ -80,6 +85,12 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 		this.columns = columns;
 	}
 
+
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param copyGrid A copy of the ParallelGrid object
+	 */
 	public ParallelGrid(ParallelGrid copyGrid) {
 		this(copyGrid.rows,copyGrid.columns); // Call constructor above
 		// Grid  initialization
@@ -90,13 +101,14 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 		}
 	}
 
+
     /**
 	 * Method to recursivly divide the grid row by row and initialise threads
 	 * to update each section of the grid and return if the grid has changed
-	 *   or not.
+	 * or not.
 	 * 
 	 * @param  none
-	 * @return change A boolean that shows whether the grid cell has been changed or not
+	 * @return Change a boolean that shows whether the grid cell has been changed or not
 	 */
 	protected Boolean compute() {
 	    // If below threshold, run sequentially
@@ -104,56 +116,97 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 			//System.out.println("Check to see if we reach sequential threashold");
 		    return update();
 		} else {
-
-		    // Way to split the grid -- WIP, currently experimental
 			//System.out.println("Test to see if we enter the else statement of compute.");
 			int midPoint = (end + start) / 2;
-			// Split the grid in two
-			ParallelGrid partOneGrid = new ParallelGrid(grid, updateGrid, start, midPoint, columns); // Recurse the first half of the grid
-			ParallelGrid partTwoGrid = new ParallelGrid(grid, updateGrid, midPoint, end, columns);   // Recurse the second half of the grid
+			// Split the grid in two and create threads for each half
+			ParallelGrid partOneGrid = new ParallelGrid(grid, updateGrid, start, midPoint, columns);
+			ParallelGrid partTwoGrid = new ParallelGrid(grid, updateGrid, midPoint, end, columns); 
 
 			// Create threads using ForkJoin method
 			partOneGrid.fork();                         // Create subthreads to deal with the left side
 			boolean partTwoRes = partTwoGrid.compute(); // Handle the right side in this thread
 			boolean partOneRes = partOneGrid.join();    // Ensure the left side is finished before the right/main user thread terminates 
-			return (partTwoRes || partOneRes);          // Maybe use &&
+			return (partTwoRes || partOneRes);     
 		}
 	}
+
 	
+	/**
+	 * Gets the number of rows in the grid without the sink border.
+	 * 
+	 * @param  none
+	 * @return Number of rows - 2
+	 */
 	public int getRows() {
 		return rows - 2;      //  Less the sink
 	}
 
+
+	/**
+	 * Gets the number of columns in the grid without the sink border.
+	 *
+	 * @param  none
+	 * @return Number of columns - 2
+	 */
 	public int getColumns() {
 		return columns - 2;   //  Less the sink
 	}
 
 
-	int get(int i, int j) {
+	/**
+	 * Gets a specific cell in the grid in row i, column j.
+	 * 
+	 * @param  i The row number
+	 * @param  j The column number
+	 * @return A cell in the grid
+	 */
+	public int get(int i, int j) {
 		return this.grid[i][j];
 	}
 
+	
+	/**
+	 * Gets the entire grid as a 2D array.
+	 * 
+	 * @param  none
+	 * @return The 2D array
+	 */
 	public int[][] getGrid() {
 		return this.grid;
 	}
 
+	
+    /**
+	 * Gets the entire updateGrid as a 2D array.
+	 *
+	 * @param  none
+	 * @return The 2D array
+	 */
 	public int[][] getUpdateGrid() {
 		return this.updateGrid;
 	}
 
+
+	/**
+	 * Sets all cells in the grid to a specified value.
+	 *
+	 * @param  value The value to set the cell to
+	 * @return void
+	 */
 	void setAll(int value) {
 		//borders are always 0
-		for( int i = 1; i < rows - 1; i++ ) {
-			for( int j = 1; j < columns - 1; j++ ) 			
+		for (int i = 1; i < rows - 1; i++) {
+			for(int j = 1; j < columns - 1; j++) {			
 				grid[i][j] = value;
 			}
+		}
 	}
 	
 
 	//for the next timestep - copy updateGrid into grid
 	public void nextTimeStep() {
-		for(int i = 1; i < rows - 1; i++ ) {
-			for( int j = 1; j < columns - 1; j++ ) {
+		for (int i = 1; i < rows - 1; i++) {
+			for (int j = 1; j < columns - 1; j++) {
 				this.grid[i][j] = updateGrid[i][j];
 			}
 		}
@@ -162,10 +215,10 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	//This runs in a timestep
 	boolean update() {
 		boolean change = false;
-		//do not update border
-		for( int i = this.start; i < this.end + 1; i++ ) {
+		// Do not update border
+		for(int i = this.start; i < this.end + 1; i++) {
 			//System.out.println("Check number of columns: " +columns);
-			for( int j = 1; j < columns + 1; j++ ) {
+			for(int j = 1; j < columns + 1; j++) {
 				//System.out.println("Check to see if we enter the update bit");
 				updateGrid[i][j] = (grid[i][j] % 4) +
 						(grid[i - 1][j] / 4) +
@@ -176,15 +229,22 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 					change = true;
 				}
 		    }
-		} //end nested for
-	if(change) {    // If there's been a change to the grid, then move to the next time step
+		} 
+	if (change) {        // If there's been a change to the grid, then move to the next time step
 	    nextTimeStep();
 	}
 
-	return change; // If this is false, the loop stops since we're done changing the grid
+	return change;      // If this is false, the loop stops since we're done changing the grid
 
 	}
 
+    /**
+	 * Switches the grids (only the grid references 
+	 * since arrays are pass by reference).
+	 * 
+	 * @param  none
+	 * @return void
+	 */
 	public void swapGrids() {
 		int[][] temp = grid;
 		grid = updateGrid;
@@ -192,9 +252,12 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	}
 
 
-
-	// NB, am I supposed to update this????
-	// Display the grid in text format
+	/**
+	 * Prints the grid to stdout without the borders (padded with zeros).
+	 * 
+	 * @param  none
+	 * @return void
+	 */
 	void printGrid() {
 		int i,j;
 		// Not border is not printed
@@ -217,18 +280,23 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 		System.out.printf("+\n\n");
 	}
 	
-	// Write grid out as an image
+	/**
+	 * Writes the grid out as an image which is stored as 
+	 * a .png file in the ouput folder. 
+	 * 
+	 * @param  fileName The name of the .png file the image is saved as
+	 * @return void     Writes an image to a file; nothing is returned.
+	 */
 	void gridToImage(String fileName) throws IOException {
-        BufferedImage dstImage =
-                new BufferedImage(rows, columns, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage dstImage = new BufferedImage(rows, columns, BufferedImage.TYPE_INT_ARGB);
         // Integer values from 0 to 255.
         int a = 0;
         int g = 0; // Green
         int b = 0; // Blue
         int r = 0; // Red
 
-		for(int i = 0; i < rows; i++ ) {
-			for(int j = 0; j < columns; j++ ) {
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < columns; j++) {
 			     g = 0; // Green
 			     b = 0; // Blue
 			     r = 0; // Red

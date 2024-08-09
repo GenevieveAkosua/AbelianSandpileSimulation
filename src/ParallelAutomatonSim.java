@@ -5,26 +5,25 @@
  * Copyright:    Copyright M.M.Kuttel 2024 CSC2002S, UCT
  *
  * @author:      Genevieve Chikwanha
- * @version:     29/07/2024
+ * @version:     04/08/2024
  ************************************************************************************************/
 
-// Update grid (or copy grid) ONLY once all threads are done
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.io.IOException;
-
+iimport java.io.IOException;
 import java.util.concurrent.ForkJoinPool; 
 
 class ParallelAutomatonSim {
 	// When true, will print output for debugging
-	static final boolean DEBUG = true;
-	
+	static final boolean DEBUG = false;
+
 	// Timers to measure program run time
 	static long startTime = 0;
 	static long endTime = 0;
                           
 	// ForkJoinPool object using the common pool approach
 	static final ForkJoinPool forkJoinPool = ForkJoinPool.commonPool(); 
+
 
 	/**
 	 * Records program start time
@@ -36,6 +35,7 @@ class ParallelAutomatonSim {
 		startTime = System.currentTimeMillis();
 	}
 
+
 	/**
 	 * Records program start time
 	 *
@@ -46,6 +46,7 @@ class ParallelAutomatonSim {
 		endTime = System.currentTimeMillis(); 
 	}
 	
+
 	/**
 	 * Reads in the values from a .csv file and creates a 2D array with a height
 	 * and width specified in the command-line input to store the values from the file 
@@ -81,6 +82,7 @@ class ParallelAutomatonSim {
 	        }
 	        return array;
 	    }
+
 
     /**
 	 * The main method of the program which initialises a ParallelGrid object
