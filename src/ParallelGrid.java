@@ -25,7 +25,7 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	// A copy of the 2D grid
 	static int[][] updateGrid;
 	// The cutoff point for the compute method
-	protected static final int SEQUENTIAL_THRESHOLD = 2;
+	protected static final int SEQUENTIAL_THRESHOLD = 30;
 
     
 	/**

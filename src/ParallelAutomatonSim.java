@@ -10,7 +10,7 @@
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-iimport java.io.IOException;
+import java.io.IOException;
 import java.util.concurrent.ForkJoinPool; 
 
 class ParallelAutomatonSim {
@@ -149,11 +149,11 @@ class ParallelAutomatonSim {
     	simulationGrid.gridToImage(outputFileName);
 
 		// Write grid as .csv
-		simulationGrid.gridToCSV("outputGrids/CSVGrid_" + rowNum + "_by_" + colNum + ".csv");
+		//simulationGrid.gridToCSV("outputGrids/CSVGrid_" + rowNum + "_by_" + colNum + ".csv");
 
        	// Print simulation details     	
 		//System.out.printf("\t Rows: %d, Columns: %d\n", simulationGrid.getRows(), simulationGrid.getColumns());
-		System.out.printf("Number of steps to stable state: %d \n", counter);
+		System.out.printf("Number of steps to stable state: %d \n", counter - 1);
 		System.out.printf("Time: %d ms\n",endTime - startTime );  //  Total computation time 		
     }
 }
