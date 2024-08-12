@@ -13,6 +13,9 @@ CLASS_FILES = $(patsubst $(SRC_DIR)/%.java, $(BIN_DIR)/%.class, $(JAVA_FILES))
 # Compilation flags
 JAVAC_FLAGS = -d bin -sourcepath src
 
+# Java runtime flags
+JAVA_FLAGS = -XX:+UseParallelGC
+
 # Main class
 MAIN_CLASS = ParallelAutomatonSim
 
@@ -34,4 +37,4 @@ clean:
 		rm -rf bin/*
 
 run: all
-		java -classpath bin $(MAIN_CLASS) $(ARGS)
+		java $(JAVA_FLAGS) -classpath bin $(MAIN_CLASS) $(ARGS)

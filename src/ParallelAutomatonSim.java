@@ -135,7 +135,6 @@ class ParallelAutomatonSim {
 			if (changed) {
 				simulationGrid.swapGrids();
 			}
-		
 
 	    	if (DEBUG) {
 			    simulationGrid.printGrid();
@@ -148,11 +147,7 @@ class ParallelAutomatonSim {
 		// Write grid as image
     	simulationGrid.gridToImage(outputFileName);
 
-		// Write grid as .csv
-		//simulationGrid.gridToCSV("outputGrids/CSVGrid_" + rowNum + "_by_" + colNum + ".csv");
-
        	// Print simulation details     	
-		//System.out.printf("\t Rows: %d, Columns: %d\n", simulationGrid.getRows(), simulationGrid.getColumns());
 		System.out.printf("Number of steps to stable state: %d \n", counter - 1);
 		System.out.printf("Time: %d ms\n",endTime - startTime );  //  Total computation time 		
     }

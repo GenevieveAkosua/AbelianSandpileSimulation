@@ -40,19 +40,17 @@ def create_sandpile_csv(rows, columns, fill_value=0, centre_value=None, output_f
 dimensions = [
     (32, 32),
     (125, 125),
-    (250, 250),
-    (750, 750),
-    (2000, 2000)
+    (750, 750)
 ]
 
 for rows, columns in dimensions:
     # Create a grid with all zeros
-    create_sandpile_csv(rows, columns, fill_value=0)
+    create_sandpile_csv(rows, columns, fill_value=8)
 
     # Create a grid with all zeros and 10 in the center
-    create_sandpile_csv(rows, columns, fill_value=0, centre_value=10)
+    create_sandpile_csv(rows, columns, fill_value=0, centre_value=77777)
 
     # Create a grid with all fours
-    create_sandpile_csv(rows, columns, fill_value=4)
+    create_sandpile_csv(rows, columns, fill_value=4, centre_value=1111)
 
 print("All files have been created successfully.")

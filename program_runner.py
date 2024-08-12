@@ -117,102 +117,6 @@ with panda.ExcelWriter('results.xlsx') as writer:
 print("All trials are complete and results have been saved.")
 
 
-import pandas as panda
-import subprocess
-import os
-from PIL import Image
-from pixelmatch import pixelmatch
-
-
-def run_simulation(input_file, output_file, version_folder):
-    original_dir = os.getcwd()
-    os.chdir(version_folder)
-
-    command = f'make run ARGS="input/{input_file} output/{output_file}"'
-    result = subprocess.run(command, capture_output=True, text=True, shell=True)
-
-    os.chdir(original_dir)
-    return result.stdout.strip().split('\n')
-
-
-def extract_metrics(output_lines):
-    steps_line = next((line for line in output_lines if "Number of steps to stable state" in line), None)
-    time_line = next((line for line in output_lines if "Time:" in line), None)
-
-    steps = int(steps_line.split(":")[1].strip()) if steps_line else None
-    time = int(time_line.split(":")[1].strip().split()[0]) if time_line else None
-
-    return steps, time
-
-
-def compare_outputs(serial_output, parallel_output):
-    return
-
-
-TRIALS = 2
-serial_folder = "/Users/genevievechikwanha/Library/CloudStorage/OneDrive-UniversityofCapeTown/Uni Work/Computer Science/CSC2002S/CSC2002S 2024/1. Paralell Programming/Assignments/Assignment1/PCP_ParallelAssignment2024"
-parallel_folder = "/Users/genevievechikwanha/Library/CloudStorage/OneDrive-UniversityofCapeTown/Uni Work/Computer Science/CSC2002S/CSC2002S 2024/1. Paralell Programming/Assignments/Assignment1/CHKKAR002"
-io_pairs = [
-    ('8_by_8_all_4.csv', '8.png'),
-    ('16_by_16_all_4.csv', '16.png'),
-    ('16_by_16_one_100.csv', '16One.png'),
-    ('65_by_65_all_4.csv', '65.png')
-]
-# ('517_by_517_centre_534578.csv', '517.png'),
-# ('1001_by_1001_all_8.csv', '1001.png')
-
-all_results = []
-
-for input_file, output_file in io_pairs:
-    for trial in range(TRIALS):
-        # Run serial version
-        serial_output = run_simulation(input_file, output_file, serial_folder)
-        serial_steps, serial_time = extract_metrics(serial_output)
-
-        # Run parallel version
-        parallel_output = run_simulation(input_file, output_file, parallel_folder)
-        parallel_steps, parallel_time = extract_metrics(parallel_output)
-
-        # Check correctness
-        is_correct = compare_outputs(serial_output, parallel_output)
-
-        # Store results
-        all_results.append({
-            'input_file': input_file,
-            'output_file': output_file,
-            'trial': trial,
-            'serial_timesteps': serial_steps,
-            'serial_timetaken': serial_time,
-            'parallel_timesteps': parallel_steps,
-            'parallel_timetaken': parallel_time,
-            'is_correct': is_correct
-        })
-
-    print(f"Completed {TRIALS} trials for {input_file} -> {output_file}")
-
-# Convert results into a data frame
-data_frame = panda.DataFrame(all_results)
-
-# Calculate minimum values and correctness for each io pair
-min_results = data_frame.groupby(['input_file', 'output_file']).agg({
-    'serial_timesteps': 'min',
-    'serial_timetaken': 'min',
-    'parallel_timesteps': 'min',
-    'parallel_timetaken': 'min',
-    'is_correct': 'mean'
-}).reset_index()
-
-min_results = min_results.rename(columns={'is_correct': 'correctness_rate'})
-
-# Save the full results and minimum values in sheets in an Excel file
-with panda.ExcelWriter('results.xlsx') as writer:
-    data_frame.to_excel(writer, sheet_name='All Results', index=False)
-    min_results.to_excel(writer, sheet_name='Summary', index=False)
-
-print("All trials are complete and results have been saved.")
-print("\nSummary:")
-print(min_results)
-"""
 
 
 import pandas as panda
@@ -303,6 +207,102 @@ for input_file, output_file in io_pairs:
 
         # Check correctness
         is_correct = compare_outputs(serial_folder, parallel_folder, output_file)
+
+        # Store results
+        all_results.append({
+            'input_file': input_file,
+            'output_file': output_file,
+            'trial': trial,
+            'serial_timesteps': serial_steps,
+            'serial_timetaken': serial_time,
+            'parallel_timesteps': parallel_steps,
+            'parallel_timetaken': parallel_time,
+            'is_correct': is_correct
+        })
+
+    print(f"Completed {TRIALS} trials for {input_file} -> {output_file}")
+
+# Convert results into a data frame
+data_frame = panda.DataFrame(all_results)
+
+# Calculate minimum values and correctness for each io pair
+min_results = data_frame.groupby(['input_file', 'output_file']).agg({
+    'serial_timesteps': 'min',
+    'serial_timetaken': 'min',
+    'parallel_timesteps': 'min',
+    'parallel_timetaken': 'min',
+    'is_correct': 'mean'
+}).reset_index()
+
+min_results = min_results.rename(columns={'is_correct': 'correctness_rate'})
+
+# Save the full results and minimum values in sheets in an Excel file
+with panda.ExcelWriter('results.xlsx') as writer:
+    data_frame.to_excel(writer, sheet_name='All Results', index=False)
+    min_results.to_excel(writer, sheet_name='Summary', index=False)
+
+print("All trials are complete and results have been saved.")
+print("\nSummary:")
+print(min_results)
+
+"""
+
+import pandas as panda
+import subprocess
+import os
+
+
+def run_simulation(input_file, output_file, version_folder):
+    original_dir = os.getcwd()
+    os.chdir(version_folder)
+
+    command = f'make run ARGS="input/{input_file} output/{output_file}"'
+    result = subprocess.run(command, capture_output=True, text=True, shell=True)
+
+    os.chdir(original_dir)
+    return result.stdout.strip().split('\n')
+
+
+def extract_metrics(output_lines):
+    steps_line = next((line for line in output_lines if "Number of steps to stable state" in line), None)
+    time_line = next((line for line in output_lines if "Time:" in line), None)
+
+    steps = int(steps_line.split(":")[1].strip()) if steps_line else None
+    time = int(time_line.split(":")[1].strip().split()[0]) if time_line else None
+
+    return steps, time
+
+
+def compare_outputs(serial_output, parallel_output):
+    return
+
+
+TRIALS = 2
+serial_folder = "/Users/genevievechikwanha/Library/CloudStorage/OneDrive-UniversityofCapeTown/Uni Work/Computer Science/CSC2002S/CSC2002S 2024/1. Paralell Programming/Assignments/Assignment1/PCP_ParallelAssignment2024"
+parallel_folder = "/Users/genevievechikwanha/Library/CloudStorage/OneDrive-UniversityofCapeTown/Uni Work/Computer Science/CSC2002S/CSC2002S 2024/1. Paralell Programming/Assignments/Assignment1/CHKKAR002"
+io_pairs = [
+    ('8_by_8_all_4.csv', '8.png'),
+    ('16_by_16_all_4.csv', '16.png'),
+    ('16_by_16_one_100.csv', '16One.png'),
+    ('65_by_65_all_4.csv', '65.png')
+]
+# ('517_by_517_centre_534578.csv', '517.png'),
+# ('1001_by_1001_all_8.csv', '1001.png')
+
+all_results = []
+
+for input_file, output_file in io_pairs:
+    for trial in range(TRIALS):
+        # Run serial version
+        serial_output = run_simulation(input_file, output_file, serial_folder)
+        serial_steps, serial_time = extract_metrics(serial_output)
+
+        # Run parallel version
+        parallel_output = run_simulation(input_file, output_file, parallel_folder)
+        parallel_steps, parallel_time = extract_metrics(parallel_output)
+
+        # Check correctness
+        is_correct = compare_outputs(serial_output, parallel_output)
 
         # Store results
         all_results.append({

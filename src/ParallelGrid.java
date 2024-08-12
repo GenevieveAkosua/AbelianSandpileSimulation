@@ -25,7 +25,7 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 	// A copy of the 2D grid
 	static int[][] updateGrid;
 	// The cutoff point for the compute method
-	protected static final int SEQUENTIAL_THRESHOLD = 30;
+	protected static final int SEQUENTIAL_THRESHOLD = 25;
 
     
 	/**
@@ -205,8 +205,8 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 
 	//for the next timestep - copy updateGrid into grid
 	public void nextTimeStep() {
-		for (int i = 1; i < rows - 1; i++) {
-			for (int j = 1; j < columns - 1; j++) {
+		for(int i = 1; i < rows - 1; i++) {
+			for(int j = 1; j < columns - 1; j++) {
 				this.grid[i][j] = updateGrid[i][j];
 			}
 		}
@@ -295,8 +295,8 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
         int b = 0; // Blue
         int r = 0; // Red
 
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < columns; j++) {
+		for(int i = 0; i < rows; i++) {
+			for(int j = 0; j < columns; j++) {
 			     g = 0; // Green
 			     b = 0; // Blue
 			     r = 0; // Red
@@ -330,41 +330,5 @@ public class ParallelGrid extends RecursiveTask<Boolean> {
 		
         File dstFile = new File(fileName);
         ImageIO.write(dstImage, "png", dstFile);
-	}
-
-	/**
-	 * Creates a .csv file representation of the grid.
-	 * 
-	 * @param   fileName The name that the .csv file should be saved as
-	 * @return  void
-	 */
-	public void gridToCSV(String fileName) throws IOException{
-        FileWriter write = new FileWriter(fileName);
-
-		//System.out.println(r + " and " + c);
-		//System.out.println("Grid dimensions: " + grid.length + "x" + grid[0].length);
-        //System.out.println("Last cell value: " + grid[grid.length-8][grid[0].length-2]);
-
-		// Write the dimensions to the .csv
-		write.append(Integer.toString(rows - 2)).append(",").append(Integer.toString(columns - 2));
-
-		// Add empty cells after the dimenstions in the .csv
-		for (int i = 2; i < columns; i++) {
-            write.append(",");
-		}
-		write.append("\n");
-
-		// Write the grid to the .csv
-		for (int j = 1; j < rows; j++) {
-            for (int i = 1; i < columns - 1; i++) {
-                write.append(Integer.toString(grid[j][i]));
-
-				if (i < columns - 1) {
-                    write.append(",");
-				}
-			}
-
-			write.append("\n");
-		}
 	}
 }
